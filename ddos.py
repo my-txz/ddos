@@ -1,0 +1,48 @@
+import requests
+import threading
+import time
+import random
+import os
+
+# 浏览器 User-Agent 列表（随机模拟）
+user_agents = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.1 Safari/605.1.15",
+    "Mozilla/5.0 (Linux; Android 11; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Mobile Safari/537.36",
+    "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:90.0) Gecko/20100101 Firefox/90.0"
+]
+
+# 用户输入
+os.system("clear")
+url = input("请输入目标URL（例如：https://example.com）: ")
+speed = int(input("请求速度 (1~1000)："))  # 值越大越快
+threads_count = int(input("开启多少个线程 (建议不超过100)："))
+
+# 请求函数（线程工作函数）
+def send_requests():
+    sent = 0
+    while True:
+        try:
+            headers = {
+                'User-Agent': random.choice(user_agents)
+            }
+            response = requests.get(url, headers=headers, timeout=10)
+            sent += 1
+            print(f"[线程 {threading.current_thread().name}] 发送第 {sent} 个请求 -> 状态码: {response.status_code}")
+            time.sleep((1000 - speed) / 2000)
+        except requests.exceptions.RequestException as e:
+            print(f"[线程 {threading.current_thread().name}] 请求失败: {e}")
+            time.sleep(1)
+
+# 启动线程
+for i in range(threads_count):
+    t = threading.Thread(target=send_requests, name=f"T{i+1}")
+    t.daemon = True  # 设置为守护线程
+    t.start()
+
+# 防止主线程退出
+try:
+    while True:
+        time.sleep(1)
+except KeyboardInterrupt:
+    print("\n用户中断，退出程序。")
